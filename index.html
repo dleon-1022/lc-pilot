@@ -36,6 +36,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .user-chip{font-size:11px;color:#94a3b8;background:#0f172a;border:1px solid #334155;padding:4px 10px;border-radius:20px}
 .logout-btn{padding:5px 10px;border:1px solid #334155;border-radius:6px;background:transparent;color:#64748b;font-size:11px;cursor:pointer}
 .logout-btn:hover{color:#f1f5f9;border-color:#64748b}
+.save-now-btn{padding:5px 12px;border:1.5px solid #059669;border-radius:6px;background:#064e3b;color:#6ee7b7;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+.save-now-btn:hover{background:#059669;color:#fff}
 
 /* ── PROGRESS ── */
 .progress-bar-wrap{background:#1e293b;border-bottom:1px solid #334155;padding:10px 20px;display:flex;align-items:center;gap:14px}
@@ -121,7 +123,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="login-box">
     <div class="login-logo">🎬</div>
     <div class="login-title">LC Review</div>
-    <div class="login-sub">Piloto de Revisión · 2026-07-20</div>
+    <div class="login-sub">Piloto de Revisión · 2026-07-21</div>
     <div class="login-field">
       <label class="login-label">Usuario</label>
       <input class="login-input" type="text" id="loginUser" autocomplete="username" placeholder="usuario">
@@ -146,6 +148,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button class="tab-btn" data-audit="sheetout"           id="tab_sheetout">Sheetout</button>
     <div class="header-right">
       <span class="user-chip" id="userChip"></span>
+      <button class="save-now-btn" id="saveNowBtn" onclick="pushResults()" title="Guardar resultados en GitHub">💾 Guardar</button>
       <button class="logout-btn" id="logoutBtn">Salir</button>
     </div>
   </div>
@@ -662,11 +665,22 @@ async function pushResults() {
   setTimeout(() => toast.classList.remove("show"), 4000);
 }
 
-// Auto-guardar cada 5 minutos
+// Auto-guardar cada 2 minutos
 setInterval(() => {
   const items = currentItems().filter(i => i.result);
   if (items.length && currentUser) pushResults();
-}, 5 * 60 * 1000);
+}, 2 * 60 * 1000);
+
+// Advertencia al salir si hay resultados sin guardar
+window.addEventListener("beforeunload", (e) => {
+  const items = ALL_ITEMS.filter(i => i.result);
+  if (items.length && currentUser) {
+    pushResults();  // intento de guardar
+    e.preventDefault();
+    e.returnValue = "Tienes resultados sin confirmar. ¿Seguro que quieres salir?";
+    return e.returnValue;
+  }
+});
 </script>
 </body>
 </html>
