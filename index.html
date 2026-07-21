@@ -38,6 +38,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .logout-btn:hover{color:#f1f5f9;border-color:#64748b}
 .save-now-btn{padding:5px 12px;border:1.5px solid #059669;border-radius:6px;background:#064e3b;color:#6ee7b7;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
 .save-now-btn:hover{background:#059669;color:#fff}
+.token-btn{padding:5px 8px;border:1px solid #334155;border-radius:6px;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer}
+.token-btn:hover{border-color:#6366f1;color:#6366f1}
 
 /* ── PROGRESS ── */
 .progress-bar-wrap{background:#1e293b;border-bottom:1px solid #334155;padding:10px 20px;display:flex;align-items:center;gap:14px}
@@ -149,6 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="header-right">
       <span class="user-chip" id="userChip"></span>
       <button class="save-now-btn" id="saveNowBtn" onclick="pushResults()" title="Guardar resultados en GitHub">💾 Guardar</button>
+      <button class="token-btn" id="tokenBtn" onclick="openTokenModal()" title="Configurar token GitHub">🔑</button>
       <button class="logout-btn" id="logoutBtn">Salir</button>
     </div>
   </div>
@@ -181,6 +184,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<!-- Token Modal -->
+<div class="incident-backdrop" id="tokenBackdrop" style="z-index:200">
+  <div class="incident-panel" style="max-width:420px">
+    <div class="incident-header">
+      <h3>🔑 Token de GitHub</h3>
+      <span class="incident-hint">Solo necesita configurarse una vez</span>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      <p style="font-size:12px;color:#94a3b8">Pega tu GitHub Personal Access Token (scope: repo). Se guarda solo en este browser.</p>
+      <input id="tokenInput" type="password" placeholder="ghp_..." class="login-input" style="font-family:monospace;font-size:13px"/>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveToken()" style="flex:1;padding:10px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Guardar token</button>
+        <button onclick="closeTokenModal()" style="padding:10px 16px;background:transparent;color:#64748b;border:1px solid #334155;border-radius:8px;font-size:13px;cursor:pointer">Cancelar</button>
+      </div>
+      <p id="tokenStatus" style="font-size:11px;color:#6ee7b7;min-height:16px"></p>
+    </div>
+  </div>
+</div>
+
 <!-- Save Toast -->
 <div class="save-toast" id="saveToast"></div>
 
@@ -201,7 +223,7 @@ const GH_REPO     = "lc-pilot";
 const GH_BRANCH   = "main";
 const GH_RESULTS  = "resultados/";
 const GH_SNAPSHOTS = "snapshots/";
-const GH_TOKEN    = "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";
+let GH_TOKEN = localStorage.getItem("lc_gh_token") || "";
 
 // ══════════════════════════════════════════════════════════════
 // SHA-256 (Web Crypto API)
@@ -664,6 +686,33 @@ async function pushResults() {
 
   setTimeout(() => toast.classList.remove("show"), 4000);
 }
+
+// ══════════════════════════════════════════════════════════════
+// TOKEN MODAL
+// ══════════════════════════════════════════════════════════════
+function openTokenModal() {
+  document.getElementById("tokenBackdrop").classList.add("open");
+  const input = document.getElementById("tokenInput");
+  input.value = GH_TOKEN;
+  input.focus();
+  document.getElementById("tokenStatus").textContent =
+    GH_TOKEN ? "✓ Token configurado" : "";
+}
+function closeTokenModal() {
+  document.getElementById("tokenBackdrop").classList.remove("open");
+}
+function saveToken() {
+  const val = document.getElementById("tokenInput").value.trim();
+  if (!val) { document.getElementById("tokenStatus").textContent = "Pega un token válido"; return; }
+  GH_TOKEN = val;
+  localStorage.setItem("lc_gh_token", val);
+  document.getElementById("tokenStatus").textContent = "✓ Token guardado";
+  setTimeout(closeTokenModal, 800);
+}
+document.getElementById("tokenInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") saveToken();
+  if (e.key === "Escape") closeTokenModal();
+});
 
 // Auto-guardar cada 2 minutos
 setInterval(() => {
